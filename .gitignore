@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# runtime data — the demo database is rebuilt by `npm run seed`
+data/
+
+# scratch space for asset work
+.work/
+
+# logs and OS noise
+*.log
+.DS_Store
+Thumbs.db

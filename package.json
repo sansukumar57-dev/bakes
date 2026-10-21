@@ -1,0 +1,16 @@
+{
+  "name": "crumb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Order a cake for a date the baker can actually keep.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "seed": "node --disable-warning=ExperimentalWarning src/seed.js",
+    "reset": "node --disable-warning=ExperimentalWarning src/seed.js --reset",
+    "test": "node --disable-warning=ExperimentalWarning --test test/pricing.test.js"
+  }
+}

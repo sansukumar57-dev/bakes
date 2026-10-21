@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Baker view — Crumb</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .baker-wrap {
+        padding-block: 32px 64px;
+      }
+      .key-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-block: 20px 8px;
+        flex-wrap: wrap;
+      }
+      .key-row .field {
+        margin: 0;
+        flex: 1 1 240px;
+      }
+      .day-group {
+        margin-top: 32px;
+      }
+      .day-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 12px;
+      }
+      .day-head h2 {
+        font-size: 1.15rem;
+      }
+      .day-head span {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .order-row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line-2);
+      }
+      @media (min-width: 720px) {
+        .order-row {
+          grid-template-columns: 130px minmax(0, 1fr) 160px 150px;
+          align-items: center;
+        }
+      }
+      .order-code {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+      }
+      .order-main strong {
+        display: block;
+        font-size: 0.92rem;
+      }
+      .order-main span {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .order-row select {
+        min-height: 44px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--card);
+        width: 100%;
+      }
+      .stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--card);
+        padding: 10px 14px;
+        min-width: 110px;
+      }
+      .stat b {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1.4rem;
+      }
+      .stat span {
+        font-size: 0.74rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="wordmark" href="/">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <path d="M4 20h16M5 20v-6.5c0-1.4 1.1-2.5 2.5-2.5S10 12.1 10 13.5V14c0-1.4 1.1-2.5 2.5-2.5S15 12.6 15 14v-.5c0-1.4 1.1-2.5 2.5-2.5S20 12.1 20 13.5V20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M12 8.5V5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="12" cy="4" r="1.4" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Crumb</span>
+        </a>
+        <p class="baker-line"><span class="dot" aria-hidden="true"></span>Baker view</p>
+        <a class="header-link" href="/">Storefront</a>
+      </div>
+    </header>
+
+    <main class="wrap baker-wrap">
+      <p class="eyebrow">Not public</p>
+      <h1 class="display-md">Today at the counter</h1>
+      <p class="lede tight">Orders by date, oldest first. Change a status and it saves straight away.</p>
+
+      <form class="key-row" id="key-form">
+        <div class="field">
+          <label for="key">Baker key</label>
+          <input id="key" type="password" placeholder="crumb-demo" autocomplete="off" />
+        </div>
+        <button class="btn btn-primary" type="submit">Open</button>
+      </form>
+      <p class="hint">Demo key is <code>crumb-demo</code>. Set <code>CRUMB_BAKER_KEY</code> to change it.</p>
+
+      <div id="baker-out" aria-live="polite"></div>
+    </main>
+
+    <script type="module" src="/baker.js"></script>
+  </body>
+</html>

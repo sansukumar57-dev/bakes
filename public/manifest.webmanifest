@@ -1,0 +1,19 @@
+{
+  "name": "Crumb — home baker, HSR Layout",
+  "short_name": "Crumb",
+  "description": "Order a cake for a date the baker can actually keep. Real notice periods, real daily limits.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fbf6ef",
+  "theme_color": "#fbf6ef",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

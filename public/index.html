@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Crumb — order a cake for a date that exists</title>
+    <meta
+      name="description"
+      content="A home baker in HSR Layout. See which dates are actually open before you fall in love with a cake."
+    />
+    <meta name="theme-color" content="#fbf6ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171310" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="wordmark" href="#/" data-action="home">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <path d="M4 20h16M5 20v-6.5c0-1.4 1.1-2.5 2.5-2.5S10 12.1 10 13.5V14c0-1.4 1.1-2.5 2.5-2.5S15 12.6 15 14v-.5c0-1.4 1.1-2.5 2.5-2.5S20 12.1 20 13.5V20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M12 8.5V5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="12" cy="4" r="1.4" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Crumb</span>
+        </a>
+
+        <p class="baker-line">
+          <span class="dot" aria-hidden="true"></span>
+          Home baker · HSR Layout
+        </p>
+
+        <a class="header-link" href="#/track">Track an order</a>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <!-- ---------------------------------------------------------- catalogue -->
+      <section id="view-catalogue" class="view" aria-labelledby="catalogue-title">
+        <div class="wrap">
+          <div class="hero">
+            <p class="eyebrow">Small batch · one baker · four cakes a day</p>
+            <h1 id="catalogue-title">Order a cake for a date that&nbsp;exists.</h1>
+            <p class="lede">
+              Most bakers take your order, then tell you the day is gone. Here you pick the date first and
+              see what is genuinely left — every cake has a real notice period and a real daily limit.
+            </p>
+          </div>
+
+          <div class="toolbar">
+            <div class="filters" role="group" aria-label="Filter cakes">
+              <button class="chip is-active" data-filter="all" aria-pressed="true">All</button>
+              <button class="chip" data-filter="chocolate" aria-pressed="false">Chocolate</button>
+              <button class="chip" data-filter="fruit" aria-pressed="false">Fruit</button>
+              <button class="chip" data-filter="eggless-available" aria-pressed="false">Eggless option</button>
+              <button class="chip" data-filter="celebration" aria-pressed="false">Celebration</button>
+            </div>
+            <p class="toolbar-note" id="catalogue-count"></p>
+          </div>
+
+          <div class="cake-grid" id="cake-grid" aria-busy="true"></div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------- build -->
+      <section id="view-build" class="view" aria-labelledby="build-title" hidden>
+        <div class="wrap">
+          <button class="back" data-action="home">
+            <span aria-hidden="true">←</span> All cakes
+          </button>
+
+          <div class="build-layout">
+            <div class="build-main">
+              <div class="build-head">
+                <div class="build-art" id="build-art"></div>
+                <div>
+                  <p class="eyebrow" id="build-tagline"></p>
+                  <h1 id="build-title" class="display-md"></h1>
+                  <p class="lede tight" id="build-description"></p>
+                  <ul class="badges" id="build-badges"></ul>
+                </div>
+              </div>
+
+              <form id="build-form" novalidate>
+                <fieldset class="step">
+                  <legend><span class="step-n">1</span> Size</legend>
+                  <div class="option-row" id="size-options"></div>
+                  <p class="hint" id="size-hint"></p>
+                </fieldset>
+
+                <fieldset class="step">
+                  <legend><span class="step-n">2</span> Extras</legend>
+                  <label class="switch">
+                    <input type="checkbox" id="opt-eggless" />
+                    <span class="switch-body">
+                      <span class="switch-title">Eggless</span>
+                      <span class="switch-note" id="eggless-note"></span>
+                    </span>
+                    <span class="switch-price">+₹100</span>
+                  </label>
+
+                  <label class="switch">
+                    <input type="checkbox" id="opt-candles" />
+                    <span class="switch-body">
+                      <span class="switch-title">Candles</span>
+                      <span class="switch-note">Six candles and a matchbox</span>
+                    </span>
+                    <span class="switch-price">+₹30</span>
+                  </label>
+
+                  <div class="field">
+                    <label for="inscription">Writing on the cake <span class="optional">optional</span></label>
+                    <input
+                      id="inscription"
+                      type="text"
+                      maxlength="40"
+                      placeholder="Happy birthday, Amma"
+                      autocomplete="off"
+                    />
+                    <p class="counter"><span id="inscription-count">0</span>/40</p>
+                  </div>
+                </fieldset>
+
+                <fieldset class="step">
+                  <legend><span class="step-n">3</span> The date</legend>
+                  <p class="hint" id="calendar-hint">Loading the baker's calendar…</p>
+                  <div class="date-grid" id="date-grid" role="radiogroup" aria-labelledby="calendar-hint"></div>
+                </fieldset>
+
+                <fieldset class="step">
+                  <legend><span class="step-n">4</span> Collection window</legend>
+                  <div class="option-row" id="slot-options"></div>
+                </fieldset>
+
+                <fieldset class="step">
+                  <legend><span class="step-n">5</span> How you are getting it</legend>
+                  <div class="option-row" id="fulfil-options"></div>
+                  <div class="field" id="address-field" hidden>
+                    <label for="address">Delivery address</label>
+                    <textarea id="address" rows="2" maxlength="240" placeholder="Flat, building, street, landmark"></textarea>
+                    <p class="hint">Within 5 km of HSR Layout. ₹250, added at the end.</p>
+                  </div>
+                </fieldset>
+
+                <div class="step">
+                  <legend class="as-legend"><span class="step-n">6</span> Your details</legend>
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="name">Name</label>
+                      <input id="name" type="text" autocomplete="name" maxlength="60" placeholder="Who is collecting?" />
+                    </div>
+                    <div class="field">
+                      <label for="phone">Mobile</label>
+                      <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="10 digits" />
+                    </div>
+                  </div>
+                  <p class="hint">No account, no card details stored. The baker calls this number if something changes.</p>
+                </div>
+
+                <div class="errors" id="errors" role="alert" hidden></div>
+              </form>
+            </div>
+
+            <!-- summary rail -->
+            <aside class="summary" aria-label="Order summary">
+              <div class="summary-card">
+                <h2 class="summary-title">Your order</h2>
+                <dl class="summary-list" id="summary-list"></dl>
+                <div class="summary-total">
+                  <span>Total</span>
+                  <strong id="summary-total">₹0</strong>
+                </div>
+                <p class="summary-deposit" id="summary-deposit"></p>
+                <button class="btn btn-primary btn-block" id="place-order" type="button">Place order</button>
+                <p class="summary-foot">
+                  Nothing is charged now. The baker confirms by phone, then you pay the deposit by UPI.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- --------------------------------------------------------------- done -->
+      <section id="view-done" class="view" aria-labelledby="done-title" hidden>
+        <div class="wrap narrow">
+          <div class="receipt">
+            <p class="eyebrow">Order placed</p>
+            <h1 id="done-title" class="display-md">The date is yours.</h1>
+            <p class="lede tight" id="done-summary"></p>
+
+            <div class="code-block">
+              <span class="code-label">Your order code</span>
+              <strong id="done-code" class="code"></strong>
+            </div>
+
+            <dl class="receipt-lines" id="done-lines"></dl>
+
+            <div class="receipt-actions">
+              <a class="btn btn-primary" href="#/track" id="done-track">Track this order</a>
+              <button class="btn btn-quiet" data-action="home">Order another</button>
+            </div>
+
+            <p class="hint center">
+              Save the code. You can look the order up any time without an account.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------- track -->
+      <section id="view-track" class="view" aria-labelledby="track-title" hidden>
+        <div class="wrap narrow">
+          <p class="eyebrow">No sign-in needed</p>
+          <h1 id="track-title" class="display-md">Track an order</h1>
+          <p class="lede tight">Enter the code from your confirmation, like CRB-7F3K2.</p>
+
+          <form class="track-form" id="track-form">
+            <div class="field">
+              <label for="track-code">Order code</label>
+              <input id="track-code" type="text" placeholder="CRB-" autocomplete="off" spellcheck="false" />
+            </div>
+            <button class="btn btn-primary" type="submit">Look it up</button>
+          </form>
+
+          <div id="track-result" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p>
+          <strong>Crumb</strong> is a fictional pilot bakery built for a demo. Cakes, prices, dates and orders
+          are invented — no real shop, no real payments. Photographs are stock images from
+          <a href="https://unsplash.com" rel="noopener">Unsplash</a>, not this baker's cakes.
+        </p>
+        <a href="/baker">Baker view</a>
+      </div>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
