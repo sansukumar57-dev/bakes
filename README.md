@@ -61,3 +61,4 @@ src/seed.js          fictional catalogue and demo pressure
 public/              storefront, builder, receipt, tracking, baker view, PWA
 test/pricing.test.js the rules, pinned
 ```
+# bakes
