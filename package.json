@@ -13,5 +13,10 @@
     "reset": "node --disable-warning=ExperimentalWarning src/seed.js --reset",
     "test": "node --disable-warning=ExperimentalWarning --test test/pricing.test.js",
     "smoke": "node --disable-warning=ExperimentalWarning test/smoke.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
   }
 }

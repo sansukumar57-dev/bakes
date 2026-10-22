@@ -1,0 +1,6 @@
+{
+  "appId": "com.crumb.baker",
+  "appName": "Crumb",
+  "webDir": "public",
+  "private": true
+}
