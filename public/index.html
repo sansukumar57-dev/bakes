@@ -13,6 +13,9 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -244,6 +247,23 @@
         <a href="/baker">Baker view</a>
       </div>
     </footer>
+
+    <nav class="tabbar" aria-label="Primary">
+      <a href="#/" data-tab="home">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+          <path d="M3.5 10.2 12 3l8.5 7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M5.5 9.2V20h13v-10.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Home
+      </a>
+      <a href="#/track" data-tab="track">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8" />
+          <path d="M12 7.6v4.4l2.9 1.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Track
+      </a>
+    </nav>
 
     <script type="module" src="/app.js"></script>
   </body>

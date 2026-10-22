@@ -1,8 +1,21 @@
-const CACHE = 'crumb-v3';
+const CACHE = 'crumb-v6';
 const SHELL = ['/', '/styles.css', '/app.js', '/shared/pricing.js', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Fetched with 'reload' for the same reason as the fetch handler: the
+  // precache must hold today's shell, not whatever the HTTP cache still has.
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) =>
+        Promise.all(
+          SHELL.map((url) =>
+            fetch(new Request(url, { cache: 'reload' })).then((res) => c.put(url, res)),
+          ),
+        ),
+      )
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,6 +39,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
+  // Never answer the worker script from the cache. If the worker could
+  // serve its own file, a new version could never install, and the app
+  // would be stuck on whatever was cached first.
+  if (url.pathname === '/sw.js') return;
+
   // Prices and availability must never come from a cache.
   if (url.pathname.startsWith('/api/')) return;
 
@@ -45,8 +63,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Everything else: try the network, fall back to the cache when offline.
+  //
+  // `cache: 'reload'` matters. The worker's own fetch goes through the HTTP
+  // cache, so a plain fetch() can be answered from a still-fresh entry and the
+  // worker will happily cache and serve the old file. Reloading skips the HTTP
+  // cache for the request while the response is still stored below, so a
+  // deploy is visible on the next load and offline still works.
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: 'reload' })
       .then((res) => {
         put(request, res);
         return res;

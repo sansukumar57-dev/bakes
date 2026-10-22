@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { join, normalize, extname } from 'node:path';
 import { db, nowIso, todayStr, makeCode, ROOT } from './src/db.js';
 import {
@@ -27,6 +27,9 @@ const MIME = {
   '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
 };
 
@@ -65,21 +68,25 @@ const readBody = (req, limit = 32 * 1024) =>
     req.on('error', reject);
   });
 
-const rowToCake = (row) => ({
-  id: row.id,
-  slug: row.slug,
-  name: row.name,
-  tagline: row.tagline,
-  description: row.description,
-  pricePerKg: row.price_per_kg,
-  minKg: row.min_kg,
-  leadDays: row.lead_days,
-  tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
-  palette: row.palette ? JSON.parse(row.palette) : null,
-  image: row.image || '',
-  imageAlt: row.image_alt || '',
-  sizes: sizeOptions(row),
-});
+const rowToCake = (row) => {
+  const cake = {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    tagline: row.tagline,
+    description: row.description,
+    pricePerKg: row.price_per_kg,
+    minKg: row.min_kg,
+    leadDays: row.lead_days,
+    tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
+    palette: row.palette ? JSON.parse(row.palette) : null,
+    image: row.image || '',
+    imageAlt: row.image_alt || '',
+  };
+  // Size options are derived from the mapped cake, never the raw row — the
+  // rules read camelCase and the database speaks snake_case.
+  return { ...cake, sizes: sizeOptions(cake) };
+};
 
 const rowToOrder = (row) => ({
   id: row.id,
@@ -168,7 +175,7 @@ const api = {
     const calendar = calendarFor(row);
     const chosen = calendar.find((d) => d.date === body.date);
 
-    const errors = validateOrder(body, { cake: row, calendarDate: chosen });
+    const errors = validateOrder(body, { cake, calendarDate: chosen });
     if (errors.length) return sendJson(res, 422, { errors });
 
     const kg = Number(body.kg);
@@ -297,6 +304,52 @@ const api = {
 
 /* ------------------------------------------------------------------ static */
 
+/*
+ * Code must never be served stale. The service worker is network-first, but its
+ * own fetch still goes through the HTTP cache — so if the server hands out
+ * `max-age=300` for app.js, a deploy stays invisible for five minutes and the
+ * worker then caches the old file. `no-cache` means "revalidate every time",
+ * which is cheap for text and correct.
+ *
+ * Photographs never change, so those are the only thing worth pinning.
+ *
+ * This keys off the request path, never off the normalised filesystem path:
+ * `path.normalize` turns "/img/x.jpg" into "\img\x.jpg" on Windows, which
+ * would quietly defeat every prefix check below.
+ */
+function cacheControl(pathname, isShared) {
+  if (isShared) return 'no-cache';
+  if (pathname === '/' || pathname === '/index.html' || pathname === '/sw.js') return 'no-cache';
+  if (/\.(css|js)$/.test(pathname)) return 'no-cache';
+  if (pathname.startsWith('/img/')) return 'public, max-age=31536000, immutable';
+  return 'public, max-age=300';
+}
+
+const VERSIONED = ['/app.js', '/styles.css', '/baker.js'];
+
+const assetVersion = async (rel) => {
+  try {
+    const s = await stat(join(PUBLIC_DIR, rel));
+    return String(Math.round(s.mtimeMs));
+  } catch {
+    return '1';
+  }
+};
+
+/**
+ * Stamp code references with the file's mtime. Without this the browser is
+ * free to serve a month-old app.js out of its own cache, and a fix that never
+ * reaches the screen is worse than no fix at all.
+ */
+const stampVersions = async (html) => {
+  let out = html;
+  for (const rel of VERSIONED) {
+    const v = await assetVersion(rel);
+    out = out.replaceAll(`"${rel}"`, `"${rel}?v=${v}"`);
+  }
+  return out;
+};
+
 const serveStatic = async (req, res, pathname) => {
   const isShared = pathname === '/shared/pricing.js';
   const rel = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
@@ -305,10 +358,13 @@ const serveStatic = async (req, res, pathname) => {
     : join(PUBLIC_DIR, rel === '/' || rel === '\\' ? 'index.html' : rel);
 
   try {
-    const body = await readFile(file);
+    let body = await readFile(file);
+    if (pathname === '/' || pathname === '/index.html' || pathname === '/baker' || pathname === '/baker.html') {
+      body = Buffer.from(await stampVersions(body.toString('utf8')));
+    }
     res.writeHead(200, {
       'Content-Type': MIME[extname(file)] || 'application/octet-stream',
-      'Cache-Control': isShared ? 'no-cache' : rel === 'index.html' ? 'no-cache' : 'public, max-age=300',
+      'Cache-Control': cacheControl(pathname, isShared),
     });
     res.end(body);
   } catch {

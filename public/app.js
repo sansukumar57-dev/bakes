@@ -78,7 +78,7 @@ function cakeArt(palette, { tiers = 2, candle = false } = {}) {
 function renderCatalogue() {
   const grid = $('#cake-grid');
   if (!state.cakes.length) {
-    grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+    grid.innerHTML = `<div class="skeleton-group" aria-hidden="true">${'<div class="skeleton"></div>'.repeat(3)}</div>`;
     return;
   }
 
@@ -144,6 +144,17 @@ function recompute() {
   return quote;
 }
 
+/* The calendar entry the customer has picked, if any. */
+function selectedDay() {
+  return state.calendar.find((d) => d.date === state.selectedDate) || null;
+}
+
+/* An order can only be placed on a date the baker can still keep. */
+function placeOrderEnabled() {
+  const day = selectedDay();
+  return Boolean(day) && (day.status === 'open' || day.status === 'limited');
+}
+
 function computeQuote(kg, eggless, candles) {
   return priceFor(state.cake, { kg, eggless, candles });
 }
@@ -172,7 +183,7 @@ function renderSummary(quote) {
     ? `${money(quote.deposit)} deposit · balance on delivery`
     : `${money(quote.deposit)} deposit · balance on collection`;
 
-  const ready = Boolean(state.selectedDate);
+  const ready = placeOrderEnabled();
   $('#place-order').disabled = !ready;
 }
 
@@ -293,7 +304,7 @@ function renderCalendar() {
   if (full) hint += ` ${full} ${full === 1 ? 'date is' : 'dates are'} already full.`;
   $('#calendar-hint').textContent = hint;
 
-  $('#place-order').disabled = !chosen || !(chosen.status === 'open' || chosen.status === 'limited');
+  $('#place-order').disabled = !placeOrderEnabled();
 }
 
 /* ------------------------------------------------------------------ order */
@@ -367,6 +378,8 @@ function renderDone() {
 
   $('#done-track').dataset.code = o.code;
   showView('view-done');
+  // Keep the URL honest so a reload does not bounce back to the builder.
+  if (location.hash !== '#/done') location.hash = '#/done';
 }
 
 /* ------------------------------------------------------------------ track */
@@ -441,8 +454,26 @@ async function openCake(slug) {
   document.title = `${data.cake.name} — Crumb`;
 }
 
+/*
+ * The bottom tab bar is only on small screens, but it still has to say where
+ * you are. "Home" stays lit while you are inside the shop — on a cake page or
+ * the receipt — and "Track" takes over on the tracking screen.
+ */
+function setActiveTab(hash) {
+  const isTrack = hash === '#/track';
+  const isHome = !isTrack;
+  $$('.tabbar a').forEach((a) => {
+    const on = a.dataset.tab === 'home' ? isHome : isTrack;
+    a.classList.toggle('is-active', on);
+    if (on) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+}
+
 async function route() {
   const hash = location.hash || '#/';
+
+  setActiveTab(hash);
 
   if (hash.startsWith('#/cake/')) {
     await openCake(hash.slice('#/cake/'.length));
@@ -540,6 +571,8 @@ route();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    // `updateViaCache: 'none'` lets the browser check for a new worker on
+    // every visit, so a deploy is never hidden behind a cached script.
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
   });
 }
