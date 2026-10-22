@@ -128,7 +128,9 @@ export function buildCalendar({ cake, orders = [], overrides = [], today, days =
     const verdict = dayStatus({
       date,
       today,
-      leadDays: Number(cake.leadDays) || 2,
+      // Accept both shapes: the API speaks camelCase, the database row says
+      // lead_days, and this rule must not change with who is calling it.
+      leadDays: Number(cake.leadDays ?? cake.lead_days) || 2,
       used,
       capacity,
       closed: Boolean(ov?.closed),

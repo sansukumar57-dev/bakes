@@ -108,6 +108,18 @@ test('cancelled orders release their slot', () => {
   assert.equal(days[1].status, 'open');
 });
 
+test('the notice period survives either field name', () => {
+  // The API speaks camelCase, a database row says lead_days. The rule must
+  // not quietly fall back to two days if it is handed the wrong shape.
+  const fromApi = buildCalendar({ cake: { leadDays: 5 }, today: '2026-11-01', days: 10 });
+  const fromRow = buildCalendar({ cake: { lead_days: 5 }, today: '2026-11-01', days: 10 });
+
+  assert.equal(fromApi.filter((d) => d.status === 'too_soon').length, 5);
+  assert.equal(fromRow.filter((d) => d.status === 'too_soon').length, 5);
+  assert.equal(fromApi[6].status, 'open');
+  assert.equal(fromRow[6].status, 'open');
+});
+
 /* ------------------------------------------------------------- validation */
 
 const openDate = { date: '2026-11-10', status: 'open', note: '4 slots left' };

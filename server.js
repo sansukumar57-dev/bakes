@@ -153,7 +153,7 @@ const api = {
     const cake = rowToCake(row);
     sendJson(res, 200, {
       cake,
-      calendar: calendarFor(row),
+      calendar: calendarFor(cake),
       deliveryFee: DELIVERY_FEE,
       slots: SLOTS,
       today: todayStr(),
@@ -172,7 +172,7 @@ const api = {
     if (!row) return sendJson(res, 404, { error: 'No such cake.' });
 
     const cake = rowToCake(row);
-    const calendar = calendarFor(row);
+    const calendar = calendarFor(cake);
     const chosen = calendar.find((d) => d.date === body.date);
 
     const errors = validateOrder(body, { cake, calendarDate: chosen });

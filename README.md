@@ -16,7 +16,8 @@ Zero dependencies, no build step. Requires Node 22.5+ (uses the built-in `node:s
 ```powershell
 npm run seed       # 8 cakes + demo pressure on the calendar
 npm run reset      # wipe and re-seed
-npm test           # 17 tests over pricing, availability and validation
+npm test           # 18 unit tests over pricing, availability and validation
+npm run smoke      # 23 end-to-end checks against a running server
 ```
 
 The seeded demo does two things on purpose: it books one weekday past its capacity so you can see a `full` day, and it closes one date so you can see a `closed` day with a reason.
@@ -30,6 +31,19 @@ Most cake-ordering flows are optimistic: pick a cake, pick a date, and only late
 - Capacity is claimed inside a `BEGIN IMMEDIATE` transaction at order time, so two people tapping *Place order* on the last slot cannot both win — the loser gets a 409 with a human sentence, not a stack trace.
 
 The rules live in `src/pricing.js` with no I/O and no clock. The server imports it, and the browser imports the same file over `/shared/pricing.js`, so the price on screen and the price in the database can't drift apart.
+
+Two details that are easy to get wrong, and are therefore pinned by tests:
+
+- A cake's notice period is per cake. A three-tier celebration needs five days, a sponge needs two. The calendar is built from `leadDays`, and the rule accepts either `leadDays` or a raw row's `lead_days` so a caller cannot quietly fall back to a default.
+- Capacity is claimed inside a `BEGIN IMMEDIATE` transaction, so two people tapping *Place order* on the last slot cannot both win — the loser gets a 409 with a human sentence, not a stack trace.
+
+## Keeping the browser honest
+
+A demo is only worth looking at if the screen matches the code. Three things guard that:
+
+- Code is served with `no-cache`, and the HTML stamps `/app.js` and `/styles.css` with the file's mtime, so a fix cannot hide behind a cached copy.
+- The service worker is network-first for everything except `/img/`, and it never answers requests for its own script — a worker that serves its own file can never update itself.
+- `/api/` is never cached at all. A stale price or a stale calendar is worse than an offline page.
 
 ## Routes
 
@@ -57,8 +71,16 @@ Baker view: `/baker` — demo key `crumb-demo`, overridable with `CRUMB_BAKER_KE
 server.js            HTTP routes, static files, atomic capacity claim
 src/db.js            schema, date helpers, order codes
 src/pricing.js       pure pricing + calendar + validation (shared with the browser)
-src/seed.js          fictional catalogue and demo pressure
+src/seed.js          fictional catalogue, photographs and demo pressure
 public/              storefront, builder, receipt, tracking, baker view, PWA
+public/img/          the eight photographs
 test/pricing.test.js the rules, pinned
+test/smoke.mjs       end-to-end checks against a running server
 ```
-# bakes
+
+## Credits
+
+Photographs are stock images from [Unsplash](https://unsplash.com), used under the
+Unsplash License. The baker, the cakes, the prices, the dates and every order in
+this project are invented.
+
