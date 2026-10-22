@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, normalize, extname } from 'node:path';
 import { db, nowIso, todayStr, makeCode, ROOT } from './src/db.js';
 import {
@@ -88,6 +88,36 @@ const rowToCake = (row) => {
   return { ...cake, sizes: sizeOptions(cake) };
 };
 
+/*
+ * Photographs are served immutable and the worker keeps them, so a replaced
+ * picture would never reach a browser that had already seen it. The file's
+ * mtime goes into the URL instead: the name stays stable, the URL changes when
+ * the picture does, and an unchanged picture keeps its cached copy for good.
+ */
+const imageVersions = { at: 0, map: new Map() };
+
+async function currentImageVersions() {
+  if (Date.now() - imageVersions.at < 5000) return imageVersions.map;
+  const map = new Map();
+  try {
+    for (const name of await readdir(join(PUBLIC_DIR, 'img'))) {
+      const s = await stat(join(PUBLIC_DIR, 'img', name));
+      map.set(name, String(Math.round(s.mtimeMs)));
+    }
+    imageVersions.at = Date.now();
+    imageVersions.map = map;
+  } catch {
+    /* no photographs yet */
+  }
+  return imageVersions.map;
+}
+
+async function withImageVersion(cake) {
+  if (!cake.image) return cake;
+  const v = (await currentImageVersions()).get(cake.image);
+  return v ? { ...cake, image: `${cake.image}?v=${v}` } : cake;
+}
+
 const rowToOrder = (row) => ({
   id: row.id,
   code: row.code,
@@ -142,15 +172,16 @@ const getCake = (idOrSlug) =>
   db.prepare('SELECT * FROM cakes WHERE slug = ? OR id = ?').get(String(idOrSlug), Number(idOrSlug) || -1);
 
 const api = {
-  'GET /api/cakes': (req, res) => {
+  'GET /api/cakes': async (req, res) => {
     const rows = db.prepare('SELECT * FROM cakes ORDER BY position').all();
-    sendJson(res, 200, { cakes: rows.map(rowToCake), today: todayStr() });
+    const cakes = await Promise.all(rows.map(async (r) => withImageVersion(rowToCake(r))));
+    sendJson(res, 200, { cakes, today: todayStr() });
   },
 
-  'GET /api/cakes/:id': (req, res, params) => {
+  'GET /api/cakes/:id': async (req, res, params) => {
     const row = getCake(params.id);
     if (!row) return sendJson(res, 404, { error: 'No such cake.' });
-    const cake = rowToCake(row);
+    const cake = await withImageVersion(rowToCake(row));
     sendJson(res, 200, {
       cake,
       calendar: calendarFor(cake),
@@ -418,6 +449,15 @@ const server = createServer(async (req, res) => {
   }
 
   sendJson(res, 404, { error: 'No such endpoint.' });
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n  Port ${PORT} is already taken — probably another app on this machine.`);
+    console.error(`  Run it on another port:  PORT=4185 npm start   (Windows: $env:PORT=4185; npm start)\n`);
+    process.exit(1);
+  }
+  throw err;
 });
 
 server.listen(PORT, HOST, () => {
